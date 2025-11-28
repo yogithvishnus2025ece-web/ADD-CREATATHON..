@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>LapCompare — 90+ Laptop Comparison</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364;
+      --card-bg: rgba(255,255,255,0.12);
+      --accent: #ffeb3b;
+      --table-head: #203a43;
+      --table-alt: #f7f7f7;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(90deg,var(--bg1),var(--bg2),var(--bg3));
+      color: #fff;
+      padding:24px 12px;
+    }
+
+    .wrap{ max-width:1100px; margin: 0 auto; }
+    header{ text-align:center; margin-bottom:18px; }
+    h1{ margin:8px 0 6px; font-size:28px; letter-spacing:1px; }
+    p.lead{ margin:0; opacity:0.9; font-size:14px; }
+    .card{
+      background:var(--card-bg); padding:18px; border-radius:12px;
+      box-shadow:0 6px 22px rgba(0,0,0,0.45); margin-top:18px;
+    }
+    form.row{ display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
+    label{ display:block; font-weight:600; margin-bottom:6px; font-size:14px; }
+    .field{ flex:1 1 240px; }
+    select, button{
+      width:100%; padding:10px 12px; border-radius:8px;
+      border:none; font-size:15px;
+    }
+    select{ background:rgba(255,255,255,0.95); color:#111; }
+    button{ background:var(--accent); color:#111; font-weight:700; }
+    #result{ margin-top:20px; }
+
+    table{
+      width:100%; border-collapse:collapse; background:#fff; color:#111;
+      border-radius:10px; overflow:hidden; display:block;
+      box-shadow:0 8px 30px rgba(0,0,0,0.35);
+    }
+    thead th{ background:var(--table-head); color:#fff; padding:14px 12px; }
+    tbody td{
+      padding:12px; text-align:center; border-bottom:1px solid #e6e6e6;
+      font-size:14px;
+    }
+    tbody tr:nth-child(even){ background:#fafafa; }
+    .lap-img{
+      width:200px; height:130px; object-fit:cover; border-radius:8px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.25);
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <h1>💻 LapCompare — Compare 90+ Laptops</h1>
+    <p class="lead">Choose any two laptops to compare specs instantly.</p>
+  </header>
+
+  <div class="card">
+    <form class="row" id="compareForm" onsubmit="event.preventDefault(); compareLaptops();">
+      <div class="field">
+        <label for="laptop1">Select Laptop 1</label>
+        <select id="laptop1" required><option value="">-- Choose a Laptop --</option></select>
+      </div>
+
+      <div class="field">
+        <label for="laptop2">Select Laptop 2</label>
+        <select id="laptop2" required><option value="">-- Choose a Laptop --</option></select>
+      </div>
+
+      <div style="flex:0 0 140px;">
+        <label style="visibility:hidden">Compare</label>
+        <button type="submit">Compare</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="result"></div>
+</div>
+
+<script>
+  // --------------------------------------------------
+  // ✔ Expanded 90+ Laptop List
+  // --------------------------------------------------
+  const laptopNames = [
+    // Dell
+    "Dell XPS 13", "Dell XPS 15", "Dell XPS 17",
+    "Dell Inspiron 14", "Dell Inspiron 15 3000",
+    "Dell Latitude 7430", "Dell Latitude 5440",
+    "Dell G15 Gaming", "Dell G16 Gaming",
+    "Dell Alienware m15", "Dell Alienware x16", "Dell Alienware m18",
+
+    // HP
+    "HP Spectre x360", "HP Spectre x360 14 OLED",
+    "HP Envy x360", "HP Pavilion 15",
+    "HP Victus 15 Gaming", "HP Victus 16 Gaming",
+    "HP Omen 16 Gaming", "HP Omen 17 Gaming",
+    "HP EliteBook 840", "HP ZBook Studio G9",
+
+    // Lenovo
+    "Lenovo IdeaPad Slim 3", "Lenovo IdeaPad Slim 5",
+    "Lenovo IdeaPad 1", "Lenovo IdeaPad Gaming 3",
+    "Lenovo Yoga Slim 7", "Lenovo Yoga 7i",
+    "Lenovo ThinkPad X1 Carbon", "Lenovo ThinkPad T14",
+    "Lenovo Legion 5", "Lenovo Legion Slim 5",
+    "Lenovo Legion Pro 7i", "Lenovo LOQ 15",
+    "Lenovo ThinkBook 14s", "Lenovo ThinkBook 16",
+
+    // ASUS
+    "ASUS VivoBook 15", "ASUS VivoBook 16",
+    "ASUS VivoBook S14 OLED", "ASUS ZenBook 14 OLED",
+    "ASUS ZenBook 14X OLED",
+    "ASUS TUF Gaming A15", "ASUS TUF Gaming F15",
+    "ASUS ROG Strix G15", "ASUS ROG Strix G16",
+    "ASUS ROG Zephyrus G14", "ASUS ROG Zephyrus G16",
+    "ASUS ROG Flow X16",
+
+    // Acer
+    "Acer Aspire 5", "Acer Aspire 7", "Acer Aspire Lite",
+    "Acer Swift Go 14",
+    "Acer Nitro 5", "Acer Nitro V",
+    "Acer Predator Helios 300", "Acer Predator Triton 300",
+    "Acer Predator Triton 500 SE",
+
+    // MSI
+    "MSI Modern 14", "MSI Modern 15",
+    "MSI Prestige 16", "MSI Prestige 14 Evo",
+    "MSI GF63 Thin", "MSI Katana GF66",
+    "MSI Sword 15", "MSI Raider GE78",
+    "MSI Stealth 16 Studio",
+
+    // Apple
+    "MacBook Air M1", "MacBook Air M2", "MacBook Air M3",
+    "MacBook Pro 13 M2",
+    "MacBook Pro 14 M3", "MacBook Pro 16 M3 Pro",
+    "MacBook Pro 16 M3 Max",
+
+    // Samsung
+    "Samsung Galaxy Book 2", "Samsung Galaxy Book 3",
+    "Samsung Galaxy Book 3 Pro", "Samsung Galaxy Book 3 Ultra",
+    "Samsung Galaxy Book 4", "Samsung Galaxy Book 4 Pro",
+
+    // Razer / Gigabyte / Microsoft
+    "Razer Blade 14", "Razer Blade 15", "Razer Blade 16",
+    "Gigabyte Aorus 15", "Gigabyte Aorus 17",
+    "Gigabyte Aero 16", "Gigabyte G5",
+    "Microsoft Surface Laptop 4",
+    "Microsoft Surface Laptop 5",
+    "Microsoft Surface Laptop Studio 2",
+
+    // Budget / Newcomers
+    "Realme Book Slim", "Infinix INBook X2 Plus",
+    "Infinix ZeroBook Ultra",
+    "Honor MagicBook 14",
+    "Huawei MateBook D 14", "Huawei MateBook D 15",
+    "Google Pixelbook Go", "Chuwi HeroBook Pro",
+    "Avita Liber V14", "JioBook 11"
+  ];
+
+  // --------------------------------------------------
+  // Spec generator & placeholder image creator
+  // --------------------------------------------------
+  const laptops = {};
+
+  function detectSpec(name){
+    const lower = name.toLowerCase();
+    let spec = {
+      ram: "8GB", storage: "256GB SSD", processor: "Intel i5",
+      graphics: "Integrated", display:"14-inch FHD",
+      battery:"8 Hours", weight:"1.6 Kg", os:"Windows 11",
+      price: 60000
+    };
+
+    // MacBook
+    if(lower.includes("macbook")){
+      spec.os="macOS";
+      spec.graphics="Apple Integrated GPU";
+      spec.processor = lower.includes("m3") ? "Apple M3" :
+                       lower.includes("m2") ? "Apple M2" : "Apple M1";
+      spec.ram = lower.includes("pro") ? "16GB" : "8GB";
+      spec.storage = "512GB SSD";
+      spec.display = "Retina Display";
+      spec.battery="15-20 Hours";
+      spec.price = 110000;
+      return spec;
+    }
+
+    // Gaming
+    const gamingKeys=["gaming","rog","tuf","legion","predator","nitro","raider","aorus","blade","alienware","omen","victus"];
+    if(gamingKeys.some(k=>lower.includes(k))){
+      spec.ram="16GB"; spec.storage="1TB SSD"; spec.processor="Intel i7 / Ryzen 7";
+      spec.graphics="NVIDIA RTX 3060";
+      spec.display="15.6-inch 144Hz";
+      spec.weight="2.2 Kg"; spec.price=120000;
+      return spec;
+    }
+
+    // Ultrabook
+    const ultraKeys=["xps","zenbook","spectre","air","galaxy book","surface"];
+    if(ultraKeys.some(k=>lower.includes(k))){
+      spec.ram="16GB"; spec.storage="512GB SSD"; spec.processor="Intel i7";
+      spec.display="13-14 inch FHD / OLED";
+      spec.weight="1.2 Kg"; spec.battery="14 Hours"; spec.price=130000;
+      return spec;
+    }
+
+    // Business
+    const bizKeys=["elitebook","thinkpad","latitude","zbook","thinkbook"];
+    if(bizKeys.some(k=>lower.includes(k))){
+      spec.ram="16GB"; spec.storage="512GB SSD"; spec.processor="Intel i7";
+      spec.weight="1.3 - 1.6 Kg"; spec.price=140000;
+      return spec;
+    }
+
+    // Budget
+    const budgetKeys=["aspire","inspiron","ideapad","pavilion","vivo","matebook","realme","infinix","avita","jiobook"];
+    if(budgetKeys.some(k=>lower.includes(k))){
+      spec.price=35000;
+      return spec;
+    }
+    return spec;
+  }
+
+  laptopNames.forEach(name=>{
+    const specs = detectSpec(name);
+    const text = encodeURIComponent(name);
+    const img = `https://via.placeholder.com/600x380.png?text=${text}`;
+    laptops[name] = { ...specs, img };
+  });
+
+  const dropdown1=document.getElementById('laptop1');
+  const dropdown2=document.getElementById('laptop2');
+
+  Object.keys(laptops).forEach(name=>{
+    const o1=document.createElement('option'); o1.value=name; o1.textContent=name;
+    const o2=document.createElement('option'); o2.value=name; o2.textContent=name;
+    dropdown1.appendChild(o1); dropdown2.appendChild(o2);
+  });
+
+  function compareLaptops(){
+    const lap1=dropdown1.value, lap2=dropdown2.value;
+    if(!lap1 || !lap2){ alert("Select two laptops."); return; }
+    if(lap1===lap2){ alert("Choose different laptops."); return; }
+
+    const a=laptops[lap1], b=laptops[lap2];
+
+    document.getElementById("result").innerHTML = `
+      <table>
+        <thead><tr><th>Feature</th><th>${lap1}</th><th>${lap2}</th></tr></thead>
+        <tbody>
+          <tr><td>Image</td><td><img src="${a.img}" class="lap-img"></td><td><img src="${b.img}" class="lap-img"></td></tr>
+          <tr><td>Processor</td><td>${a.processor}</td><td>${b.processor}</td></tr>
+          <tr><td>RAM</td><td>${a.ram}</td><td>${b.ram}</td></tr>
+          <tr><td>Storage</td><td>${a.storage}</td><td>${b.storage}</td></tr>
+          <tr><td>Graphics</td><td>${a.graphics}</td><td>${b.graphics}</td></tr>
+          <tr><td>Display</td><td>${a.display}</td><td>${b.display}</td></tr>
+          <tr><td>Battery</td><td>${a.battery}</td><td>${b.battery}</td></tr>
+          <tr><td>Weight</td><td>${a.weight}</td><td>${b.weight}</td></tr>
+          <tr><td>OS</td><td>${a.os}</td><td>${b.os}</td></tr>
+          <tr><td>Price</td><td>₹${a.price.toLocaleString()}</td><td>₹${b.price.toLocaleString()}</td></tr>
+        </tbody>
+      </table>
+    `;
+  }
+</script>
+
+</body>
+</html>
+Ss
